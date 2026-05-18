@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fake Job Detector Pro</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: white;
+}
+
+/* Hero */
+.hero {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.btn {
+    margin-top: 20px;
+    padding: 12px 25px;
+    background: #3b82f6;
+    border-radius: 25px;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+
+/* Container */
+.container {
+    padding: 40px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.card {
+    background: rgba(255,255,255,0.05);
+    padding: 20px;
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+}
+
+/* Inputs */
+input, textarea {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border-radius: 10px;
+    border: none;
+}
+
+/* Loader */
+.loader {
+    display: none;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* Progress Bar */
+.progress {
+    height: 10px;
+    background: #1e293b;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+.progress-bar {
+    height: 100%;
+    width: 0%;
+    transition: 0.5s;
+}
+
+/* Result */
+.result { display: none; }
+
+.safe { color: #22c55e; }
+.suspicious { color: #eab308; }
+.fake { color: #ef4444; }
+
+.good { background: rgba(34,197,94,0.2); padding:10px; border-radius:10px; }
+.bad { background: rgba(239,68,68,0.2); padding:10px; border-radius:10px; }
+
+ul { padding-left: 20px; }
+</style>
+</head>
+
+<body>
+
+<section class="hero" id="home">
+    <h1>Fake Job Detector Pro</h1>
+    <p>Smart AI-like Job Verification</p>
+    <button class="btn" onclick="startApp()">Start</button>
+</section>
+
+<div class="container" id="app" style="display:none;">
+
+<div class="card">
+    <h2>Enter Job Details</h2>
+    <input id="title" placeholder="Job Title" oninput="liveAnalyze()">
+    <input id="company" placeholder="Company Name" oninput="liveAnalyze()">
+    <input id="salary" placeholder="Salary" oninput="liveAnalyze()">
+    <input id="contact" placeholder="Link or Email" oninput="liveAnalyze()">
+    <textarea id="desc" rows="5" placeholder="Job Description" oninput="liveAnalyze()"></textarea>
+
+    <div class="loader" id="loader">🔍 Analyzing...</div>
+</div>
+
+<div class="card result" id="result">
+
+    <h2>Result</h2>
+
+    <div class="progress">
+        <div class="progress-bar" id="bar"></div>
+    </div>
+
+    <h3 id="verdict"></h3>
+
+    <div class="good">
+        <h4>✅ Safe Signals</h4>
+        <ul id="good"></ul>
+    </div>
+
+    <div class="bad">
+        <h4>⚠ Risk Signals</h4>
+        <ul id="bad"></ul>
+    </div>
+
+</div>
+
+</div>
+
+<script>
+function startApp(){
+    document.getElementById("home").style.display="none";
+    document.getElementById("app").style.display="block";
+}
+
+let timer;
+
+function liveAnalyze(){
+    clearTimeout(timer);
+
+    document.getElementById("loader").style.display="block";
+    document.getElementById("result").style.display="none";
+
+    timer = setTimeout(analyze, 800); // delay for smooth UX
+}
+
+function analyze(){
+
+    document.getElementById("loader").style.display="none";
+
+    let title = document.getElementById("title").value.toLowerCase();
+    let company = document.getElementById("company").value.toLowerCase();
+    let salary = document.getElementById("salary").value.toLowerCase();
+    let contact = document.getElementById("contact").value.toLowerCase();
+    let desc = document.getElementById("desc").value.toLowerCase();
+
+    if(!(title || company || salary || contact || desc)){
+        return;
+    }
+
+    let score = 50;
+    let good = [];
+    let bad = [];
+
+    // GOOD
+    if(company.length > 3){
+        good.push("Company name looks valid");
+        score -= 10;
+    }
+
+    if(contact.includes("http")){
+        good.push("Website link detected");
+        score -= 10;
+    }
+
+    if(desc.length > 40){
+        good.push("Detailed description");
+        score -= 10;
+    }
+
+    // BAD
+    if(desc.includes("fee") || desc.includes("pay")){
+        bad.push("Asking for money");
+        score += 25;
+    }
+
+    if(contact.includes("gmail") || contact.includes("yahoo")){
+        bad.push("Personal email used");
+        score += 10;
+    }
+
+    if(desc.includes("no experience")){
+        bad.push("No experience required");
+        score += 10;
+    }
+
+    if(salary.includes("100000") || salary.includes("high")){
+        bad.push("Unrealistic salary");
+        score += 15;
+    }
+
+    score = Math.max(0, Math.min(100, score));
+
+    let verdict = "";
+    let color = "";
+
+    if(score <= 40){
+        verdict="Safe ✅";
+        color="#22c55e";
+    } else if(score <= 70){
+        verdict="Suspicious ⚠";
+        color="#eab308";
+    } else {
+        verdict="Likely Scam ❌";
+        color="#ef4444";
+    }
+
+    // UI update
+    document.getElementById("result").style.display="block";
+    document.getElementById("verdict").innerText = verdict;
+
+    let bar = document.getElementById("bar");
+    bar.style.width = score + "%";
+    bar.style.background = color;
+
+    document.getElementById("good").innerHTML =
+        good.length ? good.map(x=>"<li>"+x+"</li>").join("") : "<li>No strong safe signals</li>";
+
+    document.getElementById("bad").innerHTML =
+        bad.length ? bad.map(x=>"<li>"+x+"</li>").join("") : "<li>No major risks</li>";
+}
+</script>
+
+</body>
+</html>
